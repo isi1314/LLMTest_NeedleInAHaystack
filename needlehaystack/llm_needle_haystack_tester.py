@@ -3,47 +3,55 @@ import glob
 import json
 import os
 import time
-
+from typing import List, Type, TypeVar
 import numpy as np
-
-from .evaluators import Evaluator
-from .providers import ModelProvider
-
+from models import TechCompany
+from evaluators import Evaluator
+from providers import ModelProvider
+from pydantic import BaseModel
+import csv
 from asyncio import Semaphore
 from datetime import datetime, timezone
+
+T = TypeVar("T", bound=BaseModel)
+
 
 class LLMNeedleHaystackTester:
     """
     This class is used to test the LLM Needle Haystack.
     """
-    def __init__(self,
-                 model_to_test: ModelProvider = None,
-                 evaluator: Evaluator = None,
-                 needle = None,
-                 haystack_dir = "PaulGrahamEssays",
-                 retrieval_question = None,
-                 results_version = 1,
-                 context_lengths_min = 1000,
-                 context_lengths_max = 16000,
-                 context_lengths_num_intervals = 35,
-                 context_lengths = None,
-                 document_depth_percent_min = 0,
-                 document_depth_percent_max = 100,
-                 document_depth_percent_intervals = 35,
-                 document_depth_percents = None,
-                 document_depth_percent_interval_type = "linear",
-                 num_concurrent_requests = 1,
-                 save_results = True,
-                 save_contexts = True,
-                 final_context_length_buffer = 200,
-                 seconds_to_sleep_between_completions = None,
-                 print_ongoing_status = True,
-                 **kwargs):
+
+    def __init__(
+        self,
+        model_to_test: ModelProvider = None,
+        evaluator: Evaluator = None,
+        needle=None,
+        haystack_dir="haystack",
+        retrieval_question=None,
+        results_version=1,
+        context_lengths_min=1000,
+        context_lengths_max=5000,
+        context_lengths_num_intervals=2,
+        context_lengths=None,
+        document_depth_percent_min=0,
+        document_depth_percent_max=100,
+        document_depth_percent_intervals=2,
+        document_depth_percents=None,
+        document_depth_percent_interval_type="linear",
+        num_concurrent_requests=1,
+        save_results=True,
+        save_contexts=True,
+        final_context_length_buffer=200,
+        seconds_to_sleep_between_completions=None,
+        print_ongoing_status=True,
+        example_needles=None,
+        **kwargs,
+    ):
         """
         :model_to_test: The model to test. Default is None.
         :evaluator: An evaluator to evaluate the model's response. Default is None.
         :param needle: The needle to be found in the haystack. Default is None.
-        :param haystack_dir: The directory of text files to use as background context (or a haystack) in which the needle is to be found. Default is Paul Graham Essays.
+        :param haystack_dir: The directory of text files to use as background context (or a haystack) in which the needle is to be found. The default is the haystack folder.
         :param retrieval_question: The question which with to prompt the model to do the retrieval.
         :param results_version: In case you would like to try the same combination of model, context length, and depth % multiple times, change the results version other than 1
         :param num_concurrent_requests: Due to volume, this object is set up to run concurrent requests, default = 1. Be careful of rate limits.
@@ -61,12 +69,15 @@ class LLMNeedleHaystackTester:
         :param document_depth_percent_interval_type: The type of interval for the document depth percent. Must be either 'linear' or 'sigmoid'. Default is 'linear'.
         :param seconds_to_sleep_between_completions: The number of seconds to sleep between completions. Default is None.
         :param print_ongoing_status: Whether or not to print the ongoing status. Default is True.
+        :param example_needles: The example needles to use. Default is None.
         :param kwargs: Additional arguments.
         """
         if not model_to_test:
             raise ValueError("A language model must be provided to test.")
         if not needle or not haystack_dir or not retrieval_question:
-            raise ValueError("Needle, haystack, and retrieval_question must be provided.")
+            raise ValueError(
+                "Needle, haystack, and retrieval_question must be provided."
+            )
 
         self.needle = needle
         self.haystack_dir = haystack_dir
@@ -79,151 +90,244 @@ class LLMNeedleHaystackTester:
         self.seconds_to_sleep_between_completions = seconds_to_sleep_between_completions
         self.print_ongoing_status = print_ongoing_status
         self.testing_results = []
+        self.schema = TechCompany
+        self.example_needles = example_needles or []
 
         if context_lengths is None:
-            if context_lengths_min is None or context_lengths_max is None or context_lengths_num_intervals is None:
-                raise ValueError("Either context_lengths_min, context_lengths_max, context_lengths_intervals need to be filled out OR the context_lengths_list needs to be supplied.")
+            if (
+                context_lengths_min is None
+                or context_lengths_max is None
+                or context_lengths_num_intervals is None
+            ):
+                raise ValueError(
+                    "Either context_lengths_min, context_lengths_max, context_lengths_intervals need to be filled out OR the context_lengths_list needs to be supplied."
+                )
             else:
-                self.context_lengths = np.round(np.linspace(context_lengths_min, context_lengths_max, num=context_lengths_num_intervals, endpoint=True)).astype(int)
+                self.context_lengths = np.round(
+                    np.linspace(
+                        context_lengths_min,
+                        context_lengths_max,
+                        num=context_lengths_num_intervals,
+                        endpoint=True,
+                    )
+                ).astype(int)
         else:
             self.context_lengths = context_lengths
 
         if document_depth_percent_interval_type not in [None, "linear", "sigmoid"]:
-            raise ValueError("document_depth_percent_interval_type must be either None, 'linear' or 'sigmoid'. If you'd like your own distribution give a list of ints in via document_depth_percent_intervals")
+            raise ValueError(
+                "document_depth_percent_interval_type must be either None, 'linear' or 'sigmoid'. If you'd like your own distribution give a list of ints in via document_depth_percent_intervals"
+            )
 
         if document_depth_percents is None:
-            if document_depth_percent_min is None or document_depth_percent_max is None or document_depth_percent_intervals is None:
-                raise ValueError("Either document_depth_percent_min, document_depth_percent_max, document_depth_percent_intervals need to be filled out OR the document_depth_percents needs to be supplied.")
-            
-            if document_depth_percent_interval_type == 'linear':
-                self.document_depth_percents = np.round(np.linspace(document_depth_percent_min, document_depth_percent_max, num=document_depth_percent_intervals, endpoint=True)).astype(int)
-            elif document_depth_percent_interval_type == 'sigmoid':
-                self.document_depth_percents = [self.logistic(x) for x in np.linspace(document_depth_percent_min, document_depth_percent_max, document_depth_percent_intervals)]
+            if (
+                document_depth_percent_min is None
+                or document_depth_percent_max is None
+                or document_depth_percent_intervals is None
+            ):
+                raise ValueError(
+                    "Either document_depth_percent_min, document_depth_percent_max, document_depth_percent_intervals need to be filled out OR the document_depth_percents needs to be supplied."
+                )
+
+            if document_depth_percent_interval_type == "linear":
+                self.document_depth_percents = np.round(
+                    np.linspace(
+                        document_depth_percent_min,
+                        document_depth_percent_max,
+                        num=document_depth_percent_intervals,
+                        endpoint=True,
+                    )
+                ).astype(int)
+            elif document_depth_percent_interval_type == "sigmoid":
+                self.document_depth_percents = [
+                    self.logistic(x)
+                    for x in np.linspace(
+                        document_depth_percent_min,
+                        document_depth_percent_max,
+                        document_depth_percent_intervals,
+                    )
+                ]
             else:
-                raise ValueError("document_depth_percent_interval_type must be either 'sigmoid' or 'linear' if document_depth_percents is None.")
+                raise ValueError(
+                    "document_depth_percent_interval_type must be either 'sigmoid' or 'linear' if document_depth_percents is None."
+                )
         else:
             self.document_depth_percents = document_depth_percents
-        
+
         self.model_to_test = model_to_test
         self.model_name = self.model_to_test.model_name
-        
+
         self.evaluation_model = evaluator
 
-    def logistic(self, x, L=100, x0=50, k=.1):
+    def logistic(self, x, L=100, x0=50, k=0.1):
         if x in [0, 100]:
             return x
         x = -k * (x - x0)
         return np.round(L * self.sigmoid(x), 3)
-    
+
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
-    
+
     async def bound_evaluate_and_log(self, sem, *args):
         async with sem:
             await self.evaluate_and_log(*args)
 
     async def run_test(self):
         sem = Semaphore(self.num_concurrent_requests)
-
-        # Run through each iteration of context_lengths and depths
         tasks = []
+
         for context_length in self.context_lengths:
             for depth_percent in self.document_depth_percents:
+                print(
+                    f"Creating task with context_length: {context_length}, depth_percent: {depth_percent}"
+                )
                 task = self.bound_evaluate_and_log(sem, context_length, depth_percent)
                 tasks.append(task)
-
+        print(f"Total tasks created: {len(tasks)}")
         # Wait for all tasks to complete
-        await asyncio.gather(*tasks)
+        results = await asyncio.gather(*tasks)
+        results = [result for result in results if result is not None]
+        print(f"Tasks completed: {len(results)}")
+        self.testing_results.extend(results)
+        print(f"Total results: {len(self.testing_results)}")
+        return self.testing_results
+    
+    def save_result_to_file(self, results, context_length, depth_percent):
+        context_file_location = f'{self.model_name.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
+        
+        if not os.path.exists("results"):
+            os.makedirs("results")
+        
+        # Convert TechCompany objects to dictionaries
+        if 'model_response' in results and isinstance(results['model_response'], list):
+            results['model_response'] = [
+                company.dict() if isinstance(company, TechCompany) else company
+                for company in results['model_response']
+            ]
+        
+        with open(f"results/{context_file_location}_results.json", "w") as f:
+            json.dump(results, f, default=str)  # Use default=str to handle non-serializable objects
 
     async def evaluate_and_log(self, context_length, depth_percent):
-        # Checks to see if you've already checked a length/percent/version.
-        # This helps if the program stop running and you want to restart later
-        if self.save_results:
-            if self.result_exists(context_length, depth_percent):
-                return
 
-        # Go generate the required length context and place your needle statement in
-        context = await self.generate_context(context_length, depth_percent)
+        try:
+            if self.save_results:
+                if self.result_exists(context_length, depth_percent):
+                    return
 
-        # Prepare your message to send to the model you're going to evaluate
-        prompt = self.model_to_test.generate_prompt(context, self.retrieval_question)
+            # Go generate the required length context and place your needle statement in
+            context = await self.generate_context(context_length, depth_percent)
 
-        test_start_time = time.time()
+            # Prepare your message to send to the model you're going to evaluate
+            prompt = self.model_to_test.generate_prompt(
+                context, self.retrieval_question
+            )
 
-        # Go see if the model can answer the question to pull out your random fact
-        response = await self.model_to_test.evaluate_model(prompt)
+            test_start_time = time.time()
 
-        test_end_time = time.time()
-        test_elapsed_time = test_end_time - test_start_time
+            # Go see if the model can answer the question to pull out your random fact
+            # response = await self.model_to_test.evaluate_model(prompt)
+            response = await self.extract_needle(prompt)
+            # Log the raw response
+            print("Raw response:", response)
 
-        # Compare the reponse to the actual needle you placed
-        score = self.evaluation_model.evaluate_response(response)
+            model_response_serializable = [company.model_dump() for company in response]
 
-        results = {
-            # 'context' : context, # Uncomment this line if you'd like to save the context the model was asked to retrieve from. Warning: This will become very large.
-            'model' : self.model_name,
-            'context_length' : int(context_length),
-            'depth_percent' : float(depth_percent),
-            'version' : self.results_version,
-            'needle' : self.needle,
-            'model_response' : response,
-            'score' : score,
-            'test_duration_seconds' : test_elapsed_time,
-            'test_timestamp_utc' : datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S%z')
-        }
+            # Save extracted companies to CSV
+            self.save_companies_to_csv(response, context_length, depth_percent)
 
-        self.testing_results.append(results)
+            test_end_time = time.time()
+            test_elapsed_time = test_end_time - test_start_time
 
-        if self.print_ongoing_status:
-            print (f"-- Test Summary -- ")
-            print (f"Duration: {test_elapsed_time:.1f} seconds")
-            print (f"Context: {context_length} tokens")
-            print (f"Depth: {depth_percent}%")
-            print (f"Score: {score}")
-            print (f"Response: {response}\n")
+            # Compare the reponse to the actual needle you placed
+            score = self.evaluation_model.evaluate_response(response)
 
-        context_file_location = f'{self.model_name.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
+            results = {
+                # 'context' : context, # Uncomment this line if you'd like to save the context the model was asked to retrieve from. Warning: This will become very large.
+                "model": self.model_name,
+                "context_length": int(context_length),
+                "depth_percent": float(depth_percent),
+                "version": self.results_version,
+                "needle": self.needle,
+                "model_response": model_response_serializable,
+                "score": score,
+                "test_duration_seconds": test_elapsed_time,
+                "test_timestamp_utc": datetime.now(timezone.utc).strftime(
+                    "%Y-%m-%d %H:%M:%S%z"
+                ),
+            }
 
-        if self.save_contexts:
-            results['file_name'] = context_file_location
-
-            # Save the context to file for retesting
-            if not os.path.exists('contexts'):
-                os.makedirs('contexts')
-
-            with open(f'contexts/{context_file_location}_context.txt', 'w') as f:
-                f.write(context)
+            self.testing_results.append(results)
             
-        if self.save_results:
-            # Save the context to file for retesting
-            if not os.path.exists('results'):
-                os.makedirs('results')
 
-            # Save the result to file for retesting
-            with open(f'results/{context_file_location}_results.json', 'w') as f:
-                json.dump(results, f)
+            if self.print_ongoing_status:
+                print(f"-- Test Summary -- ")
+                print(f"Duration: {test_elapsed_time:.1f} seconds")
+                print(f"Context: {context_length} tokens")
+                print(f"Depth: {depth_percent}%")
+                print(f"Score: {score}")
+                print(f"Response: {response}\n")
 
-        if self.seconds_to_sleep_between_completions:
-            await asyncio.sleep(self.seconds_to_sleep_between_completions)
+            context_file_location = f'{self.model_name.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
+
+            if self.save_contexts:
+                results["file_name"] = context_file_location
+
+                # Save the context to file for retesting
+                if not os.path.exists("contexts"):
+                    os.makedirs("contexts")
+
+                with open(f"contexts/{context_file_location}_context.txt", "w") as f:
+                    f.write(context)
+
+            if self.save_results:
+                # Save the context to file for retesting
+                if not os.path.exists("results"):
+                    os.makedirs("results")
+
+                # Save the result to file for retesting
+                with open(f"results/{context_file_location}_results.json", "w") as f:
+                    json.dump(results, f)
+
+            if self.seconds_to_sleep_between_completions:
+                await asyncio.sleep(self.seconds_to_sleep_between_completions)
+            return results # Return the results for the test
+        except Exception as e:
+            print(f"Error in evaluate_and_log: {str(e)}")
+            return {
+                "model": self.model_name,
+                "context_length": int(context_length),
+                "depth_percent": float(depth_percent),
+                "error": str(e),
+            }
 
     def result_exists(self, context_length, depth_percent):
         """
         Checks to see if a result has already been evaluated or not
         """
 
-        results_dir = 'results/'
+        results_dir = "results/"
         if not os.path.exists(results_dir):
             return False
-        
+
         for filename in os.listdir(results_dir):
-            if filename.endswith('.json'):
-                with open(os.path.join(results_dir, filename), 'r') as f:
+            if filename.endswith(".json"):
+                with open(os.path.join(results_dir, filename), "r") as f:
                     result = json.load(f)
-                    context_length_met = result['context_length'] == context_length
-                    depth_percent_met = result['depth_percent'] == depth_percent
-                    version_met = result.get('version', 1) == self.results_version
-                    model_met = result['model'] == self.model_name
-                    if context_length_met and depth_percent_met and version_met and model_met:
+                    context_length_met = np.all(
+                        np.isclose(result["context_length"], context_length)
+                    )
+                    depth_percent_met = np.all(
+                        np.isclose(result["depth_percent"], depth_percent)
+                    )
+                    version_met = result.get("version", 1) == self.results_version
+                    model_met = result["model"] == self.model_name
+                    if (
+                        context_length_met
+                        and depth_percent_met
+                        and version_met
+                        and model_met
+                    ):
                         return True
         return False
 
@@ -232,15 +336,65 @@ class LLMNeedleHaystackTester:
 
         # Get your haystack dir files loaded into a string
         context = self.read_context_files()
+        if isinstance(context_length, (list, np.ndarray)):
+            max_length = np.max(context_length)
+        else:
+            max_length = context_length
 
         # Truncate the haystack dir essays to the context length you desire
-        context = self.encode_and_trim(context, context_length)
+        context = self.encode_and_trim(context, max_length)
 
+        if isinstance(depth_percent, (list, np.ndarray)):
+            # If depth_percent is an array, use its first value (or you could choose another strategy)
+            depth_percent = depth_percent[0]
         # Insert your random statement according to your depth percent
         context = self.insert_needle(context, depth_percent, context_length)
 
         return context
-    
+
+    async def extract_needle(self, prompt: str) -> List[TechCompany]:
+        example_needles_str = (
+            ", ".join(self.example_needles)
+            if self.example_needles
+            else "No examples provided"
+        )
+        retrieval_question = f"Extract information about ALL technology companies mentioned in the text. Provide the output as a JSON array of objects, where each object represents a company with the following properties: name, location, employee_count, founding_year, is_public, valuation, primary_focus. Use the following examples as a guide for the format: {example_needles_str}. If all properties are not available, provide what is present. Include ALL companies mentioned"
+        try:
+            fprompt = self.model_to_test.generate_prompt(
+                context=str(prompt),
+                retrieval_question=str(retrieval_question),
+            )
+            response = await self.model_to_test.evaluate_model(fprompt)
+            print(f"Raw response from model: {response}")
+        
+            json_start = response.find('[')
+            json_end = response.rfind(']') + 1
+            if json_start != -1 and json_end != -1:
+                json_str = response[json_start:json_end]
+                companies_data = json.loads(json_str)
+            else:
+                raise ValueError("No valid JSON found in the response")
+            extracted_companies = []
+            for company_data in companies_data:
+                try:
+                    company = TechCompany(**company_data)
+                    extracted_companies.append(company)
+                except Exception as e:
+                    print(f"Error creating TechCompany instance: {str(e)}")
+                    print(f"Problematic data: {company_data}")
+        except json.JSONDecodeError:
+            print("Failed to parse JSON from model response")
+            extracted_companies = []
+        except Exception as e:
+            print(f"Error creating TechCompany instances: {str(e)}")
+            extracted_companies = []
+
+        print(f"Number of extracted companies: {len(extracted_companies)}")
+        for company in extracted_companies:
+            print(f"Extracted company: {company}")
+
+        return extracted_companies
+
     def insert_needle(self, context, depth_percent, context_length):
         tokens_needle = self.model_to_test.encode_text_to_tokens(self.needle)
         tokens_context = self.model_to_test.encode_text_to_tokens(context)
@@ -250,7 +404,7 @@ class LLMNeedleHaystackTester:
 
         # If your context + needle are longer than the context length (which it will be), then reduce tokens from the context by the needle length
         if len(tokens_context) + len(tokens_needle) > context_length:
-            tokens_context = tokens_context[:context_length - len(tokens_needle)]
+            tokens_context = tokens_context[: context_length - len(tokens_needle)]
 
         if depth_percent == 100:
             # If your depth percent is 100 (which means your needle is the last thing in the doc), throw it at the end
@@ -263,8 +417,8 @@ class LLMNeedleHaystackTester:
             tokens_new_context = tokens_context[:insertion_point]
 
             # We want to make sure that we place our needle at a sentence break so we first see what token a '.' is
-            period_tokens = self.model_to_test.encode_text_to_tokens('.')
-            
+            period_tokens = self.model_to_test.encode_text_to_tokens(".")
+
             # Then we iteration backwards until we find the first period
             while tokens_new_context and tokens_new_context[-1] not in period_tokens:
                 insertion_point -= 1
@@ -288,29 +442,65 @@ class LLMNeedleHaystackTester:
 
         while self.get_context_length_in_tokens(context) < max_context_length:
             for file in glob.glob(os.path.join(base_dir, self.haystack_dir, "*.txt")):
-                with open(file, 'r') as f:
+                with open(file, "r") as f:
                     context += f.read()
         return context
 
     def encode_and_trim(self, context, context_length):
         tokens = self.model_to_test.encode_text_to_tokens(context)
-        if len(tokens) > context_length:
+        if isinstance(context_length, (list, np.ndarray)):
+            # If context_length is an array, use its maximum value
+            max_length = np.max(context_length)
+        else:
+            max_length = context_length
+        if len(tokens) > max_length:
             context = self.model_to_test.decode_tokens(tokens, context_length)
         return context
-    
+
     def get_results(self):
         return self.testing_results
-    
+
     def print_start_test_summary(self):
-        print ("\n")
-        print ("Starting Needle In A Haystack Testing...")
-        print (f"- Model: {self.model_name}")
-        print (f"- Context Lengths: {len(self.context_lengths)}, Min: {min(self.context_lengths)}, Max: {max(self.context_lengths)}")
-        print (f"- Document Depths: {len(self.document_depth_percents)}, Min: {min(self.document_depth_percents)}%, Max: {max(self.document_depth_percents)}%")
-        print (f"- Needle: {self.needle.strip()}")
-        print ("\n\n")
+        print("\n")
+        print("Starting Needle In A Haystack Testing...")
+        print(f"- Model: {self.model_name}")
+        print(
+            f"- Context Lengths: {len(self.context_lengths)}, Min: {min(self.context_lengths)}, Max: {max(self.context_lengths)}"
+        )
+        print(
+            f"- Document Depths: {len(self.document_depth_percents)}, Min: {min(self.document_depth_percents)}%, Max: {max(self.document_depth_percents)}%"
+        )
+        print(f"- Needle: {self.needle.strip()}")
+        print("\n\n")
 
     def start_test(self):
         if self.print_ongoing_status:
             self.print_start_test_summary()
         asyncio.run(self.run_test())
+        return self.testing_results
+
+    def save_companies_to_csv(self, companies, context_length, depth_percent):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"extracted_companies_{self.model_name}_{context_length}_{depth_percent}_{timestamp}.csv"
+        fieldnames = [
+            "name",
+            "location",
+            "employee_count",
+            "founding_year",
+            "is_public",
+            "valuation",
+            "primary_focus",
+        ]
+        with open(filename, "w", newline="") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            if isinstance(companies, list):
+                for company in companies:
+                    if isinstance(company, TechCompany):
+                        writer.writerow(company.dict())
+                    else:
+                        writer.writerow(company)
+            else:
+                writer.writerow({field: "N/A" for field in fieldnames})
+
+        print(f"Saved extracted companies to {filename}")

@@ -1,0 +1,178 @@
+Testing single-needle
+
+
+Starting Needle In A Haystack Testing...
+- Model: gpt-4-turbo
+- Context Lengths: 2, Min: 1000, Max: 5000
+- Document Depths: 2, Min: 0%, Max: 100%
+- Needle: Ryoshi, based in Neo Tokyo, Japan, is a private quantum computing firm founded in 2031, currently valued at $8.7 billion with 1,200 employees focused on quantum cryptography.
+
+
+
+Creating task with context_length: 1000, depth_percent: 0
+Creating task with context_length: 1000, depth_percent: 100
+Creating task with context_length: 5000, depth_percent: 0
+Creating task with context_length: 5000, depth_percent: 100
+Total tasks created: 4
+Raw response from OpenAI API: ```json
+[
+    {
+        "name": "Ryoshi",
+        "location": "Neo Tokyo, Japan",
+        "employee_count": 1200,
+        "founding_year": 2031,
+        "is_public": false,
+        "valuation": "$8.7 billion",
+        "primary_focus": "quantum cryptography"
+    }
+]
+```
+Raw response from model: ```json
+[
+    {
+        "name": "Ryoshi",
+        "location": "Neo Tokyo, Japan",
+        "employee_count": 1200,
+        "founding_year": 2031,
+        "is_public": false,
+        "valuation": "$8.7 billion",
+        "primary_focus": "quantum cryptography"
+    }
+]
+```
+Number of extracted companies: 1
+Extracted company: name='Ryoshi' location='Neo Tokyo, Japan' employee_count=1200 founding_year=2031 is_public=False valuation=8.7 primary_focus='quantum cryptography'
+Raw response: [TechCompany(name='Ryoshi', location='Neo Tokyo, Japan', employee_count=1200, founding_year=2031, is_public=False, valuation=8.7, primary_focus='quantum cryptography')]
+Saved extracted companies to extracted_companies_gpt-4-turbo_1000_0_20241015_080516.csv
+Type of company in _evaluate_single_company: <class 'models.TechCompany'>
+-- Test Summary -- 
+Duration: 3.7 seconds
+Context: 1000 tokens
+Depth: 0%
+Score: 10.0
+Response: [TechCompany(name='Ryoshi', location='Neo Tokyo, Japan', employee_count=1200, founding_year=2031, is_public=False, valuation=8.7, primary_focus='quantum cryptography')]
+
+Raw response from OpenAI API: ```json
+[
+    {
+        "name": "Ryoshi",
+        "location": "Neo Tokyo, Japan",
+        "employee_count": 1200,
+        "founding_year": 2031,
+        "is_public": false,
+        "valuation": "$8.7 billion",
+        "primary_focus": "quantum cryptography"
+    }
+]
+```
+Raw response from model: ```json
+[
+    {
+        "name": "Ryoshi",
+        "location": "Neo Tokyo, Japan",
+        "employee_count": 1200,
+        "founding_year": 2031,
+        "is_public": false,
+        "valuation": "$8.7 billion",
+        "primary_focus": "quantum cryptography"
+    }
+]
+```
+Number of extracted companies: 1
+Extracted company: name='Ryoshi' location='Neo Tokyo, Japan' employee_count=1200 founding_year=2031 is_public=False valuation=8.7 primary_focus='quantum cryptography'
+Raw response: [TechCompany(name='Ryoshi', location='Neo Tokyo, Japan', employee_count=1200, founding_year=2031, is_public=False, valuation=8.7, primary_focus='quantum cryptography')]
+Saved extracted companies to extracted_companies_gpt-4-turbo_1000_100_20241015_080527.csv
+Type of company in _evaluate_single_company: <class 'models.TechCompany'>
+-- Test Summary -- 
+Duration: 3.4 seconds
+Context: 1000 tokens
+Depth: 100%
+Score: 10.0
+Response: [TechCompany(name='Ryoshi', location='Neo Tokyo, Japan', employee_count=1200, founding_year=2031, is_public=False, valuation=8.7, primary_focus='quantum cryptography')]
+
+Raw response from OpenAI API: ```json
+[
+    {
+        "name": "Ryoshi",
+        "location": "Neo Tokyo, Japan",
+        "employee_count": 1200,
+        "founding_year": 2031,
+        "is_public": "private",
+        "valuation": "$8.7 billion",
+        "primary_focus": "quantum cryptography"
+    }
+]
+```
+Raw response from model: ```json
+[
+    {
+        "name": "Ryoshi",
+        "location": "Neo Tokyo, Japan",
+        "employee_count": 1200,
+        "founding_year": 2031,
+        "is_public": "private",
+        "valuation": "$8.7 billion",
+        "primary_focus": "quantum cryptography"
+    }
+]
+```
+Error creating TechCompany instance: 1 validation error for TechCompany
+is_public
+  Input should be a valid boolean, unable to interpret input [type=bool_parsing, input_value='private', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.9/v/bool_parsing
+Problematic data: {'name': 'Ryoshi', 'location': 'Neo Tokyo, Japan', 'employee_count': 1200, 'founding_year': 2031, 'is_public': 'private', 'valuation': '$8.7 billion', 'primary_focus': 'quantum cryptography'}
+Number of extracted companies: 0
+Raw response: []
+Saved extracted companies to extracted_companies_gpt-4-turbo_5000_0_20241015_080540.csv
+-- Test Summary -- 
+Duration: 3.8 seconds
+Context: 5000 tokens
+Depth: 0%
+Score: 0
+Response: []
+
+Raw response from OpenAI API: ```json
+[
+    {
+        "name": "Ryoshi",
+        "location": "Neo Tokyo, Japan",
+        "employee_count": 1200,
+        "founding_year": 2031,
+        "is_public": false,
+        "valuation": "$8.7 billion",
+        "primary_focus": "quantum cryptography"
+    }
+]
+```
+Raw response from model: ```json
+[
+    {
+        "name": "Ryoshi",
+        "location": "Neo Tokyo, Japan",
+        "employee_count": 1200,
+        "founding_year": 2031,
+        "is_public": false,
+        "valuation": "$8.7 billion",
+        "primary_focus": "quantum cryptography"
+    }
+]
+```
+Number of extracted companies: 1
+Extracted company: name='Ryoshi' location='Neo Tokyo, Japan' employee_count=1200 founding_year=2031 is_public=False valuation=8.7 primary_focus='quantum cryptography'
+Raw response: [TechCompany(name='Ryoshi', location='Neo Tokyo, Japan', employee_count=1200, founding_year=2031, is_public=False, valuation=8.7, primary_focus='quantum cryptography')]
+Saved extracted companies to extracted_companies_gpt-4-turbo_5000_100_20241015_080547.csv
+Type of company in _evaluate_single_company: <class 'models.TechCompany'>
+-- Test Summary -- 
+Duration: 3.8 seconds
+Context: 5000 tokens
+Depth: 100%
+Score: 10.0
+Response: [TechCompany(name='Ryoshi', location='Neo Tokyo, Japan', employee_count=1200, founding_year=2031, is_public=False, valuation=8.7, primary_focus='quantum cryptography')]
+
+Tasks completed: 0
+Total results: 4
+Result: {'model': 'gpt-4-turbo', 'context_length': 1000, 'depth_percent': 0.0, 'version': 1, 'needle': '\nRyoshi, based in Neo Tokyo, Japan, is a private quantum computing firm founded in 2031, currently valued at $8.7 billion with 1,200 employees focused on quantum cryptography.\n', 'model_response': [{'name': 'Ryoshi', 'location': 'Neo Tokyo, Japan', 'employee_count': 1200, 'founding_year': 2031, 'is_public': False, 'valuation': 8.7, 'primary_focus': 'quantum cryptography'}], 'score': 10.0, 'test_duration_seconds': 3.7436680793762207, 'test_timestamp_utc': '2024-10-15 05:05:21+0000'}
+Result: {'model': 'gpt-4-turbo', 'context_length': 1000, 'depth_percent': 100.0, 'version': 1, 'needle': '\nRyoshi, based in Neo Tokyo, Japan, is a private quantum computing firm founded in 2031, currently valued at $8.7 billion with 1,200 employees focused on quantum cryptography.\n', 'model_response': [{'name': 'Ryoshi', 'location': 'Neo Tokyo, Japan', 'employee_count': 1200, 'founding_year': 2031, 'is_public': False, 'valuation': 8.7, 'primary_focus': 'quantum cryptography'}], 'score': 10.0, 'test_duration_seconds': 3.435577154159546, 'test_timestamp_utc': '2024-10-15 05:05:32+0000'}
+Result: {'model': 'gpt-4-turbo', 'context_length': 5000, 'depth_percent': 0.0, 'version': 1, 'needle': '\nRyoshi, based in Neo Tokyo, Japan, is a private quantum computing firm founded in 2031, currently valued at $8.7 billion with 1,200 employees focused on quantum cryptography.\n', 'model_response': [], 'score': 0, 'test_duration_seconds': 3.786790132522583, 'test_timestamp_utc': '2024-10-15 05:05:40+0000'}
+Result: {'model': 'gpt-4-turbo', 'context_length': 5000, 'depth_percent': 100.0, 'version': 1, 'needle': '\nRyoshi, based in Neo Tokyo, Japan, is a private quantum computing firm founded in 2031, currently valued at $8.7 billion with 1,200 employees focused on quantum cryptography.\n', 'model_response': [{'name': 'Ryoshi', 'location': 'Neo Tokyo, Japan', 'employee_count': 1200, 'founding_year': 2031, 'is_public': False, 'valuation': 8.7, 'primary_focus': 'quantum cryptography'}], 'score': 10.0, 'test_duration_seconds': 3.7660999298095703, 'test_timestamp_utc': '2024-10-15 05:05:58+0000'}
+Total results: 4
