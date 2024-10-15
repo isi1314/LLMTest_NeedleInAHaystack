@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "haystack"
+name = "hays"
 version = "0.1.0"
 description = ""
 authors = ["Isidora Tourni"]

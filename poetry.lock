@@ -2249,7 +2249,6 @@ files = [
 ]
 
 [package.dependencies]
-deprecated = ">=1.2.6"
 importlib-metadata = ">=6.0,<=8.4.0"
 
 [[package]]
