@@ -129,12 +129,12 @@ def main():
     args.model_to_test = get_model_to_test(args)
     args.evaluator = get_evaluator(args)
 
-    if args.multi_needle == True:
-        print("Testing multi-needle")
-        tester = LLMMultiNeedleHaystackTester(**args.__dict__)
-    else:
-        print("Testing single-needle")
-        tester = LLMNeedleHaystackTester(**args.__dict__)
+    #if args.multi_needle == True:
+        #print("Testing multi-needle")
+        #tester = LLMMultiNeedleHaystackTester(**args.__dict__)
+    #else:
+    print("Testing single-needle")
+    tester = LLMNeedleHaystackTester(**args.__dict__)
     results = tester.start_test()
     for result in results:
         print(f"Result: {result}")
