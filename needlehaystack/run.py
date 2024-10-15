@@ -17,8 +17,8 @@ class CommandArgs:
 
     provider: str = "openai"
     evaluator: str = "openai"
-    model_name: str = "gpt-4-turbo"
-    evaluator_model_name: Optional[str] = "gpt-4-turbo"
+    model_name: str = "gpt-4o"
+    evaluator_model_name: Optional[str] = "gpt-4o"
     needle: Optional[str] = (" ")
     
     haystack_dir: Optional[str] = "haystack"

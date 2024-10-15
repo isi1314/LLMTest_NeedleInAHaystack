@@ -25,7 +25,7 @@ class OpenAI(ModelProvider):
 
     def __init__(
         self,
-        model_name: str = "gpt-4-turbo",
+        model_name: str = "gpt-4o",
         model_kwargs: dict = DEFAULT_MODEL_KWARGS,
     ):
         """
