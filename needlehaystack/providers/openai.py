@@ -92,13 +92,14 @@ class OpenAI(ModelProvider):
                 "role": "system",
                 "content": "You are a helpful AI bot that answers questions for a user. Keep your response short and direct",
             },
-            {"role": "user", "content": str(context)},
             {
                 "role": "user",
                 "content": str(
                     f"{retrieval_question} Don't give information outside the document or repeat your findings"
                 ),
             },
+            {"role": "user", "content": str(context)},
+            
         ]
 
     def encode_text_to_tokens(self, text: str) -> list[int]:

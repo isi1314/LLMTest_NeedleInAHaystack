@@ -19,22 +19,29 @@ class CommandArgs:
     evaluator: str = "openai"
     model_name: str = "gpt-4-turbo"
     evaluator_model_name: Optional[str] = "gpt-4-turbo"
-    needle: Optional[str] = (
-        "\nRyoshi, based in Neo Tokyo, Japan, is a private quantum computing firm founded in 2031, currently valued at $8.7 billion with 1,200 employees focused on quantum cryptography.\n"
-    )
+    needle: Optional[str] = (" ")
+    
     haystack_dir: Optional[str] = "haystack"
     retrieval_question: Optional[str] = (
-        "Extract information about ALL technology companies mentioned in the text. If all properties are not available, provide what is present."
+        """Extract information about ALL technology companies mentioned in the text. Provide the output as a JSON array of objects, where each object represents a company with the following properties:
+        - name (required)
+        - location (if available)
+        - employee_count (if available)
+        - founding_year (if available)
+        - is_public (if available)
+        - valuation (if available)
+        - primary_focus (if available)
+        Include companies even if some of these properties are missing. Use only the information provided in the text. Do not include information not present in the text."""
     )
     results_version: Optional[int] = 1
     context_lengths_min: Optional[int] = 1000
-    context_lengths_max: Optional[int] = 5000
+    context_lengths_max: Optional[int] = 16000
     context_lengths_num_intervals: Optional[int] = 2  # 35
-    context_lengths: Optional[list[int]] = None
+    context_lengths: Optional[list[int]] = "[110000]"
     document_depth_percent_min: Optional[int] = 0
     document_depth_percent_max: Optional[int] = 100
     document_depth_percent_intervals: Optional[int] = 2  # 35
-    document_depth_percents: Optional[list[int]] = None
+    document_depth_percents: Optional[list[int]] = "[100]"
     document_depth_percent_interval_type: Optional[str] = "linear"
     num_concurrent_requests: Optional[int] = 1
     save_results: Optional[bool] = True
@@ -45,8 +52,6 @@ class CommandArgs:
     example_needles: Optional[List[str]] = field(
         default_factory=lambda: [
             "Ryoshi, based in Neo Tokyo, Japan, is a private quantum computing firm founded in 2031, currently valued at $8.7 billion with 1,200 employees focused on quantum cryptography.",
-            "Ryoshi is a private quantum computing firm founded in 2031, currently valued at $8.7 billion with 1,200 employees focused on quantum cryptography.",
-            "Ryoshi is a private quantum computing firm founded in 2031.",
             "NeuraNet, a private biotech firm based in Atlantis City, Pacific Ocean, was founded in 2022, has 950 employees, and specializes in neural interface technologies, valued at $2.6 billion.",
         ]
     )
