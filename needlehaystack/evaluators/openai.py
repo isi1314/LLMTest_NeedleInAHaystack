@@ -67,7 +67,7 @@ class OpenAIEvaluator(Evaluator):
                 valid_evaluations += 1
             except ValueError as e:
                 print(f"Error evaluating company: {e}")
-        
+
         return total_score / valid_evaluations if valid_evaluations > 0 else 0
 
     def _evaluate_single_company(self, company: TechCompany, true_answer: str) -> int:

@@ -47,7 +47,7 @@ class CommandArgs:
             "Ryoshi, based in Neo Tokyo, Japan, is a private quantum computing firm founded in 2031, currently valued at $8.7 billion with 1,200 employees focused on quantum cryptography.",
             "Ryoshi is a private quantum computing firm founded in 2031, currently valued at $8.7 billion with 1,200 employees focused on quantum cryptography.",
             "Ryoshi is a private quantum computing firm founded in 2031.",
-            "NeuraNet, a private biotech firm based in Atlantis City, Pacific Ocean, was founded in 2022, has 950 employees, and specializes in neural interface technologies, valued at $2.6 billion."
+            "NeuraNet, a private biotech firm based in Atlantis City, Pacific Ocean, was founded in 2022, has 950 employees, and specializes in neural interface technologies, valued at $2.6 billion.",
         ]
     )
     # LangSmith parameters

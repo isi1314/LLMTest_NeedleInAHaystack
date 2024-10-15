@@ -191,22 +191,24 @@ class LLMNeedleHaystackTester:
         self.testing_results.extend(results)
         print(f"Total results: {len(self.testing_results)}")
         return self.testing_results
-    
+
     def save_result_to_file(self, results, context_length, depth_percent):
         context_file_location = f'{self.model_name.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
-        
+
         if not os.path.exists("results"):
             os.makedirs("results")
-        
+
         # Convert TechCompany objects to dictionaries
-        if 'model_response' in results and isinstance(results['model_response'], list):
-            results['model_response'] = [
+        if "model_response" in results and isinstance(results["model_response"], list):
+            results["model_response"] = [
                 company.dict() if isinstance(company, TechCompany) else company
-                for company in results['model_response']
+                for company in results["model_response"]
             ]
-        
+
         with open(f"results/{context_file_location}_results.json", "w") as f:
-            json.dump(results, f, default=str)  # Use default=str to handle non-serializable objects
+            json.dump(
+                results, f, default=str
+            )  # Use default=str to handle non-serializable objects
 
     async def evaluate_and_log(self, context_length, depth_percent):
 
@@ -258,7 +260,6 @@ class LLMNeedleHaystackTester:
             }
 
             self.testing_results.append(results)
-            
 
             if self.print_ongoing_status:
                 print(f"-- Test Summary -- ")
@@ -291,7 +292,7 @@ class LLMNeedleHaystackTester:
 
             if self.seconds_to_sleep_between_completions:
                 await asyncio.sleep(self.seconds_to_sleep_between_completions)
-            return results # Return the results for the test
+            return results  # Return the results for the test
         except Exception as e:
             print(f"Error in evaluate_and_log: {str(e)}")
             return {
@@ -366,9 +367,9 @@ class LLMNeedleHaystackTester:
             )
             response = await self.model_to_test.evaluate_model(fprompt)
             print(f"Raw response from model: {response}")
-        
-            json_start = response.find('[')
-            json_end = response.rfind(']') + 1
+
+            json_start = response.find("[")
+            json_end = response.rfind("]") + 1
             if json_start != -1 and json_end != -1:
                 json_str = response[json_start:json_end]
                 companies_data = json.loads(json_str)

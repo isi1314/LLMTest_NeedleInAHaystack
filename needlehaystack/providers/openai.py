@@ -62,7 +62,7 @@ class OpenAI(ModelProvider):
             messages = [{"role": "user", "content": prompt}]
         else:
             messages = prompt
-        #print(f"Sending prompt to OpenAI API: {json.dumps(messages, indent=2)}")
+        # print(f"Sending prompt to OpenAI API: {json.dumps(messages, indent=2)}")
         try:
             response = await self.model.chat.completions.create(
                 model=self.model_name, messages=messages, **self.model_kwargs
@@ -95,7 +95,9 @@ class OpenAI(ModelProvider):
             {"role": "user", "content": str(context)},
             {
                 "role": "user",
-                "content": str(f"{retrieval_question} Don't give information outside the document or repeat your findings"),
+                "content": str(
+                    f"{retrieval_question} Don't give information outside the document or repeat your findings"
+                ),
             },
         ]
 
