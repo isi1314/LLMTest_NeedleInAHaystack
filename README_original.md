@@ -29,36 +29,8 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-Alternatively:
+### Environment Variables
 
-Follow the directions for [Micromamba installation](https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html)._
-
-Set up a mamba environment:
-```sh
-micromamba create -n haystack python=3.11
-```
-
-Activate your new environment:
-```sh
-micromamba activate haystack
-```
-
-Install the `poetry` dependency management tool:
-```sh
-pip install poetry
-```
-
-```sh
-poetry init
-```
-
-From the repo's root directory, install the dependencies using poetry:
-```sh
-poetry install
-```
-
-### Environment Variables -  .env file
-You will need to add a .env file in the root of the repository. Below are example default values:
 - `NIAH_MODEL_API_KEY` - API key for interacting with the model. Depending on the provider, this gets used appropriately with the correct sdk.
 - `NIAH_EVALUATOR_API_KEY` - API key to use if `openai` evaluation strategy is used.
 
@@ -124,7 +96,7 @@ The package `needlehaystack` is available for import in your test cases. Develop
 - `retrieval_question` - The question with which to retrieve your needle in the background context
 - `results_version` - You may want to run your test multiple times for the same combination of length/depth, change the version number if so
 - `num_concurrent_requests` - Default: 1. Set higher if you'd like to run more requests in parallel. Keep in mind rate limits.
-- `save_results` - Whether or not you'd like to save your results to file. They will be temporarily saved in the object regardless. True/False. If `save_results = True`, then this script will populate a `result/` directory with evaluation information. Due to potential concurrent requests each new test will be saved as a ew file.
+- `save_results` - Whether or not you'd like to save your results to file. They will be temporarily saved in the object regardless. True/False. If `save_results = True`, then this script will populate a `result/` directory with evaluation information. Due to potential concurrent requests each new test will be saved as a few file.
 - `save_contexts` - Whether or not you'd like to save your contexts to file. **Warning** these will get very long. True/False
 - `final_context_length_buffer` - The amount of context to take off each input to account for system messages and output tokens. This can be more intelligent but using a static value for now. Default 200 tokens.
 - `context_lengths_min` - The starting point of your context lengths list to iterate
