@@ -344,15 +344,16 @@ class LLMNeedleHaystackTester:
 
         # Truncate the haystack dir essays to the context length you desire
         context = self.encode_and_trim(context, max_length)
-        print(f"Trimmed context length: {len(self.model_to_test.encode_text_to_tokens(context))} tokens")
-
+        print(
+            f"Trimmed context length: {len(self.model_to_test.encode_text_to_tokens(context))} tokens"
+        )
 
         if isinstance(depth_percent, (list, np.ndarray)):
             # If depth_percent is an array, use its first value (or you could choose another strategy)
             depth_percent = depth_percent[0]
         # Insert your random statement according to your depth percent
-        #context = self.insert_needle(context, depth_percent, context_length)
-        #print(f"Final context length (with needle): {len(self.model_to_test.encode_text_to_tokens(context))} tokens")
+        # context = self.insert_needle(context, depth_percent, context_length)
+        # print(f"Final context length (with needle): {len(self.model_to_test.encode_text_to_tokens(context))} tokens")
         return context
 
     async def extract_needle(self, prompt: str) -> List[TechCompany]:

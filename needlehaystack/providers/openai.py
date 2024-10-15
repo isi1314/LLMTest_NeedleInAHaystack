@@ -99,7 +99,6 @@ class OpenAI(ModelProvider):
                 ),
             },
             {"role": "user", "content": str(context)},
-            
         ]
 
     def encode_text_to_tokens(self, text: str) -> list[int]:

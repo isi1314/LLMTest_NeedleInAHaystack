@@ -19,8 +19,8 @@ class CommandArgs:
     evaluator: str = "openai"
     model_name: str = "gpt-4o"
     evaluator_model_name: Optional[str] = "gpt-4o"
-    needle: Optional[str] = (" ")
-    
+    needle: Optional[str] = " "
+
     haystack_dir: Optional[str] = "haystack"
     retrieval_question: Optional[str] = (
         """Extract information about ALL technology companies mentioned in the text. Provide the output as a JSON array of objects, where each object represents a company with the following properties:
