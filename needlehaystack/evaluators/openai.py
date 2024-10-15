@@ -22,7 +22,7 @@ class OpenAIEvaluator(Evaluator):
 
     def __init__(
         self,
-        model_name: str = "gpt-4o",
+        model_name: str = "gpt-4-turbo-turbo",
         model_kwargs: dict = DEFAULT_MODEL_KWARGS,
         true_answer: str = None,
         question_asked: str = None,

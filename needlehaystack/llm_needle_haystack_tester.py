@@ -30,13 +30,13 @@ class LLMNeedleHaystackTester:
         retrieval_question=None,
         results_version=1,
         context_lengths_min=1000,
-        context_lengths_max=16000,
+        context_lengths_max=110000,
         context_lengths_num_intervals=2,
-        context_lengths="[110000]",
+        context_lengths=None,
         document_depth_percent_min=0,
         document_depth_percent_max=100,
         document_depth_percent_intervals=2,
-        document_depth_percents="[100]",
+        document_depth_percents=None,
         document_depth_percent_interval_type="linear",
         num_concurrent_requests=1,
         save_results=True,
@@ -219,11 +219,13 @@ class LLMNeedleHaystackTester:
 
             # Go generate the required length context and place your needle statement in
             context = await self.generate_context(context_length, depth_percent)
+            print("length of context:", len(context))
 
             # Prepare your message to send to the model you're going to evaluate
             prompt = self.model_to_test.generate_prompt(
                 context, self.retrieval_question
             )
+            print("length of prompt:", len(prompt))
 
             test_start_time = time.time()
 
@@ -333,7 +335,6 @@ class LLMNeedleHaystackTester:
         return False
 
     async def generate_context(self, context_length, depth_percent):
-        # Load up tiktoken so we navigate tokens more easily
 
         # Get your haystack dir files loaded into a string
         context = self.read_context_files()

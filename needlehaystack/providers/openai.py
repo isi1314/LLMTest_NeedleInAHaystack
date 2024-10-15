@@ -1,7 +1,6 @@
 import os
 from operator import itemgetter
 from typing import Optional
-import json
 from openai import AsyncOpenAI
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
@@ -25,7 +24,7 @@ class OpenAI(ModelProvider):
 
     def __init__(
         self,
-        model_name: str = "gpt-4o",
+        model_name: str = "gpt-4-turbo",
         model_kwargs: dict = DEFAULT_MODEL_KWARGS,
     ):
         """
@@ -87,6 +86,7 @@ class OpenAI(ModelProvider):
         Returns:
             list[dict[str, str]]: A list of dictionaries representing the structured prompt, including roles and content for system and user messages.
         """
+        print(f"Generating prompt for context: {context}")
         return [
             {
                 "role": "system",

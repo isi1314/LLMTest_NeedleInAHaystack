@@ -17,10 +17,11 @@ class CommandArgs:
 
     provider: str = "openai"
     evaluator: str = "openai"
-    model_name: str = "gpt-4o"
-    evaluator_model_name: Optional[str] = "gpt-4o"
-    needle: Optional[str] = " "
-
+    model_name: str = "gpt-4-turbo"
+    evaluator_model_name: Optional[str] = "gpt-4-turbo"
+    needle: Optional[str] = (
+        "Ryoshi, based in Neo Tokyo, Japan, is a private quantum computing firm founded in 2031, currently valued at $8.7 billion with 1,200 employees focused on quantum cryptography."
+    )
     haystack_dir: Optional[str] = "haystack"
     retrieval_question: Optional[str] = (
         """Extract information about ALL technology companies mentioned in the text. Provide the output as a JSON array of objects, where each object represents a company with the following properties:
@@ -35,13 +36,13 @@ class CommandArgs:
     )
     results_version: Optional[int] = 1
     context_lengths_min: Optional[int] = 1000
-    context_lengths_max: Optional[int] = 16000
+    context_lengths_max: Optional[int] = 110000
     context_lengths_num_intervals: Optional[int] = 2  # 35
-    context_lengths: Optional[list[int]] = "[110000]"
+    context_lengths: Optional[list[int]] = "[1000]"
     document_depth_percent_min: Optional[int] = 0
     document_depth_percent_max: Optional[int] = 100
     document_depth_percent_intervals: Optional[int] = 2  # 35
-    document_depth_percents: Optional[list[int]] = "[100]"
+    document_depth_percents: Optional[list[int]] = "[0]"
     document_depth_percent_interval_type: Optional[str] = "linear"
     num_concurrent_requests: Optional[int] = 1
     save_results: Optional[bool] = True
@@ -56,16 +57,10 @@ class CommandArgs:
         ]
     )
     # LangSmith parameters
-    eval_set: Optional[str] = "multi-needle-eval-pizza-3"
+    # eval_set: Optional[str] = "multi-needle-eval-pizza-3"
     # Multi-needle parameters
-    multi_needle: Optional[bool] = False
-    needles: list[str] = field(
-        default_factory=lambda: [
-            " Figs are one of the secret ingredients needed to build the perfect pizza. ",
-            " Prosciutto is one of the secret ingredients needed to build the perfect pizza. ",
-            " Goat cheese is one of the secret ingredients needed to build the perfect pizza. ",
-        ]
-    )
+    multi_needle: Optional[bool] = True
+    needles: list[str] = field(default_factory=lambda: [])
 
 
 def get_model_to_test(args: CommandArgs) -> ModelProvider:
@@ -129,16 +124,18 @@ def main():
     args.model_to_test = get_model_to_test(args)
     args.evaluator = get_evaluator(args)
 
-    #if args.multi_needle == True:
-        #print("Testing multi-needle")
-        #tester = LLMMultiNeedleHaystackTester(**args.__dict__)
-    #else:
-    print("Testing single-needle")
-    tester = LLMNeedleHaystackTester(**args.__dict__)
+    if args.multi_needle == True:
+        print("Testing multi-needle")
+        tester = LLMMultiNeedleHaystackTester(**args.__dict__)
+    else:
+        print("Testing single-needle")
+        tester = LLMNeedleHaystackTester(**args.__dict__)
     results = tester.start_test()
-    for result in results:
-        print(f"Result: {result}")
-    print(f"Total results: {len(results)}")
+
+
+#   for result in results:
+#       print(f"Result: {result}")
+#   print(f"Total results: {len(results)}")
 
 
 if __name__ == "__main__":
