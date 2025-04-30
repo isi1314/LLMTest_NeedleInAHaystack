@@ -17,8 +17,8 @@ class CommandArgs:
 
     provider: str = "openai"
     evaluator: str = "openai"
-    model_name: str = "gpt-4-turbo"
-    evaluator_model_name: Optional[str] = "gpt-4-turbo"
+    model_name: str = "gpt-4o"
+    evaluator_model_name: Optional[str] = "gpt-4o"
     needle: Optional[str] = (
         "Ryoshi, based in Neo Tokyo, Japan, is a private quantum computing firm founded in 2031, currently valued at $8.7 billion with 1,200 employees focused on quantum cryptography."
     )
@@ -38,7 +38,7 @@ class CommandArgs:
     context_lengths_min: Optional[int] = 1000
     context_lengths_max: Optional[int] = 110000
     context_lengths_num_intervals: Optional[int] = 2  # 35
-    context_lengths: Optional[list[int]] = "[1000]"
+    context_lengths: Optional[list[int]] = "[100]"
     document_depth_percent_min: Optional[int] = 0
     document_depth_percent_max: Optional[int] = 100
     document_depth_percent_intervals: Optional[int] = 2  # 35
@@ -133,9 +133,9 @@ def main():
     results = tester.start_test()
 
 
-#   for result in results:
-#       print(f"Result: {result}")
-#   print(f"Total results: {len(results)}")
+    for result in results:
+        print(f"Result: {result}")
+    print(f"Total results: {len(results)}")
 
 
 if __name__ == "__main__":
